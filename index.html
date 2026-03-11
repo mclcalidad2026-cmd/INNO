@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>INNO - Supabase PRO</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root { --primary: #6366f1; --dark-bg: #0f172a; --text-muted: #64748b; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; min-height: 100vh; margin: 0; padding-bottom: 30px; }
+    .logo-img { width: 100px; height: 100px; object-fit: contain; margin-bottom: 15px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: 3px solid white; }
+    .nav-inno { background: var(--dark-bg); padding: 12px 0; color: white; position: sticky; top: 0; z-index: 1000; }
+    .card-custom { background: white; border: none; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 20px; }
+    .card-header-custom { background: white; padding: 15px 20px; border-bottom: 1px solid #f1f5f9; font-weight: 800; border-radius: 20px 20px 0 0; }
+    .form-label { font-weight: 700; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
+    .form-control, .form-select { border-radius: 12px; padding: 10px; font-size: 15px !important; }
+    .table-checklist td { padding: 12px; font-size: 0.85rem; vertical-align: middle; }
+    .form-check-input { width: 1.4em; height: 1.4em; cursor: pointer; }
+    .stat-card { background: white; padding: 15px; border-radius: 15px; text-align: center; border-bottom: 4px solid var(--primary); }
+    .stat-val { font-size: 1.8rem; font-weight: 800; display: block; }
+    .ansi-box { background: var(--dark-bg); color: white; border-radius: 15px; padding: 15px; text-align: center; }
+    .btn-save { background: var(--primary); color: white; border: none; border-radius: 15px; padding: 18px; width: 100%; font-weight: 800; cursor: pointer; }
+    .hidden { display: none !important; }
+    .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  </style>
+</head>
+<body>
+
+  <div id="loader" class="loader-overlay">
+    <div class="spinner-border text-primary"></div>
+    <span class="mt-3 fw-bold small">Procesando...</span>
+  </div>
+
+  <div id="loginView" class="container" style="max-width: 400px; margin-top: 8vh;">
+    <div class="card-custom text-center p-4 shadow-sm">
+      <img src="https://lh3.googleusercontent.com/d/1fbONgq552uBJkKBRezGsjBtTsgt9JneO" class="logo-img">
+      <h3 class="fw-800 m-0">INNO</h3>
+      <p class="text-muted small">Inspecciones Nocturnas</p>
+      <div class="text-start mt-4"><label class="form-label">Usuario</label><select id="loginUser" class="form-select"></select></div>
+      <div class="text-start mt-3 mb-4"><label class="form-label">Contraseña</label><input type="password" id="loginPass" class="form-control" placeholder="••••"></div>
+      <button class="btn btn-primary w-100 py-3 rounded-4 fw-bold shadow-sm" onclick="handleLogin()">ENTRAR</button>
+      <div id="loginError" class="text-danger mt-3 small fw-bold"></div>
+    </div>
+  </div>
+
+  <div id="mainView" class="hidden">
+    <nav class="nav-inno mb-4 shadow-sm">
+      <div class="container px-3 d-flex justify-content-between align-items-center">
+        <div class="fw-800 fs-4">INNO</div>
+        <div class="d-flex align-items-center">
+          <span id="displayName" class="small fw-bold me-3"></span>
+          <button class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="handleLogout()">SALIR</button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container px-2" style="max-width: 900px;">
+      
+      <div id="adminMenu" class="mb-4 hidden">
+        <div class="btn-group w-100 shadow-sm rounded-4 overflow-hidden">
+          <button class="btn btn-white border py-3 fw-bold" onclick="showTab('form')">Formulario</button>
+          <button class="btn btn-white border py-3 fw-bold" onclick="showTab('dash')">Dashboard</button>
+          <button class="btn btn-white border py-3 fw-bold" onclick="showTab('follow')" style="font-size: 0.85rem;">Gestión de No Conformidades</button>
+          <button class="btn btn-white border py-3 fw-bold" onclick="showTab('closed')" style="font-size: 0.85rem;">Casos Cerrados</button>
+          <button class="btn btn-white border py-3 fw-bold text-primary" onclick="showTab('config')">⚙️ Config</button>
+        </div>
+      </div>
+
+      <div id="tab-form">
+        <div class="card-custom mb-4">
+          <div class="card-header-custom">1. Datos de Producción</div>
+          <div class="card-body p-3">
+            <div class="row g-3">
+              <div class="col-md-6"><label class="form-label">Operario Inspeccionado</label><select id="f_op_ins" class="form-select"></select></div>
+              <div class="col-md-6"><label class="form-label">Máquina</label><select id="f_maq" class="form-select"></select></div>
+              <div class="col-6 col-md-4"><label class="form-label">Fecha</label><input type="date" id="f_fecha" class="form-control"></div>
+              <div class="col-6 col-md-4"><label class="form-label">OF</label><input type="text" id="f_of" class="form-control"></div>
+              <div class="col-md-4"><label class="form-label">Cliente</label><input type="text" id="f_cliente" class="form-control"></div>
+              <div class="col-md-4"><label class="form-label">Cód. Producto</label><input type="text" id="f_codProd" class="form-control"></div>
+              <div class="col-md-4"><label class="form-label">Material</label><select id="f_mat" class="form-select"></select></div>
+              <div class="col-md-4"><label class="form-label">Proveedor</label><select id="f_prov" class="form-select"></select></div>
+              <div class="col-md-4"><label class="form-label">Color</label><input type="text" id="f_color" class="form-control"></div>
+              <div class="col-md-4"><label class="form-label">Dimensiones</label><input type="text" id="f_dims" class="form-control"></div>
+              <div class="col-md-4"><label class="form-label">INPA</label><input type="text" id="f_inpa" class="form-control"></div>
+              <div class="col-8 col-md-9"><label class="form-label">Lote (Rollos)</label><input type="number" id="f_rollos" class="form-control" oninput="updateANSI()"></div>
+              <div class="col-4 col-md-3"><div class="ansi-box"><small class="fw-bold opacity-50" style="font-size:0.6rem">ANSI II</small><div id="displayANSI" class="h4 fw-800 m-0 text-primary">-</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-custom mb-4">
+          <div class="card-header-custom">2. Checklist de Atributos</div>
+          <div class="table-responsive"><table class="table table-checklist m-0"><tbody id="checklistBody"></tbody></table></div>
+        </div>
+
+        <div class="card-custom mb-4 p-3 text-center">
+          <div class="row g-2 mb-4">
+            <div class="col-6"><input type="radio" class="btn-check" name="decision" id="decA" value="Aceptado" onchange="toggleRechazo()"><label class="btn btn-outline-success w-100 py-3 fw-bold rounded-4" for="decA">ACEPTADO ✅</label></div>
+            <div class="col-6"><input type="radio" class="btn-check" name="decision" id="decR" value="Rechazado" onchange="toggleRechazo()"><label class="btn btn-outline-danger w-100 py-3 rounded-4" for="decR">RECHAZADO ❌</label></div>
+          </div>
+          <div id="rejectionSection" class="hidden text-start mb-3">
+             <label class="form-label">Criticidad</label>
+             <select id="f_criticidad" class="form-select" onchange="calcRejection()">
+               <option value="">Seleccione...</option>
+               <option value="Crítico">Crítico (0.4)</option>
+               <option value="Mayor">Mayor (1.0)</option>
+               <option value="Leve">Leve (4.0)</option>
+             </select>
+             
+             <div class="mt-2 p-2 bg-light border rounded-3 small text-muted text-start" style="font-size: 0.65rem; line-height: 1.4;">
+                <span class="d-block mb-1"><b>Crítico:</b> Compromete la seguridad del usuario, incumple especificaciones, afecta la funcionalidad y trazabilidad del producto.</span>
+                <span class="d-block mb-1"><b>Mayor:</b> Daña la apariencia, y el uso de manera significativa.</span>
+                <span class="d-block"><b>Leve:</b> Daña la apariencia, u estética del producto de forma leve.</span>
+             </div>
+
+             <div id="rejectionResult" class="text-center border p-2 mt-2 rounded-3 fw-bold text-danger">Límite Re: -</div>
+             
+             <label class="form-label mt-3">Motivo de Rechazo</label>
+             <select id="f_motivo_rechazo" class="form-select mb-2">
+                 <option value="">Seleccione...</option>
+                 <option value="Core Sucio">Core Sucio</option>
+                 <option value="Etiquetas despegadas">Etiquetas despegadas</option>
+                 <option value="Sobretroquelado">Sobretroquelado</option>
+                 <option value="Mal identificado">Mal identificado</option>
+                 <option value="Motivos Varios">Motivos Varios</option>
+                 <option value="Rollos flojos">Rollos flojos</option>
+                 <option value="Pleca de corte deficiente">Pleca de corte deficiente</option>
+                 <option value="Superficie irregular">Superficie irregular</option>
+                 <option value="Tono doble">Tono doble</option>
+                 <option value="Incumple especificaciones">Incumple especificaciones</option>
+                 <option value="Rollo sucio">Rollo sucio</option>
+                 <option value="Pleca sobre etiqueta">Pleca sobre etiqueta</option>
+                 <option value="Tamaño de core incorrecto">Tamaño de core incorrecto</option>
+                 <option value="Cuerpo extraño metálico">Cuerpo extraño metálico</option>
+             </select>
+          </div>
+          <textarea id="f_comments" class="form-control mb-3" placeholder="Comentarios..." rows="3"></textarea>
+          <button class="btn-save shadow" onclick="handleSave()">REGISTRAR EN SUPABASE</button>
+        </div>
+      </div>
+
+      <div id="tab-dash" class="hidden">
+        <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+          <h6 class="fw-800 m-0">Resultados de inspección</h6>
+          <select id="dashFilter" class="form-select w-auto form-select-sm fw-bold border-secondary text-primary rounded-3" onchange="applyDashFilter()">
+            <option value="all">Todo</option>
+            <option value="day">Día</option>
+            <option value="week">Semana</option>
+            <option value="month">Mes</option>
+          </select>
+        </div>
+        
+        <div class="row g-2 mb-4 text-center">
+          <div class="col-4"><div class="stat-card"><span id="s-total" class="stat-val">0</span><small>TOTAL</small></div></div>
+          <div class="col-4"><div class="stat-card" style="border-color:#22c55e"><span id="s-ok" class="stat-val text-success">0</span><small>Aceptado</small></div></div>
+          <div class="col-4"><div class="stat-card" style="border-color:#ef4444"><span id="s-rej" class="stat-val text-danger">0</span><small>Rechazado</small></div></div>
+        </div>
+
+        <h6 class="fw-800 mb-3 px-1">Seguimiento de rechazos</h6>
+        <div class="row g-2 mb-4 text-center">
+          <div class="col-4"><div class="stat-card" style="border-color:#64748b; background: #f8fafc;"><span id="s-emit" class="stat-val text-secondary" style="font-size:1.3rem">0</span><small style="font-size:0.65rem">Emitidos</small></div></div>
+          <div class="col-4"><div class="stat-card" style="border-color:#f59e0b; background: #fffbeb;"><span id="s-proc" class="stat-val text-warning" style="font-size:1.3rem">0</span><small style="font-size:0.65rem">En Proceso</small></div></div>
+          <div class="col-4"><div class="stat-card" style="border-color:#3b82f6; background: #eff6ff;"><span id="s-cerr" class="stat-val text-primary" style="font-size:1.3rem">0</span><small style="font-size:0.65rem">Cerrados</small></div></div>
+        </div>
+
+        <div class="card-custom p-3">
+          <div class="table-responsive">
+            <table class="table small align-middle">
+              <thead class="table-light"><tr><th>OF</th><th>Cliente</th><th>Decisión</th><th>Operador</th></tr></thead>
+              <tbody id="dashTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-follow" class="hidden">
+        <div id="followList"></div>
+      </div>
+
+      <div id="tab-closed" class="hidden">
+        <div class="mb-4">
+          <input type="text" id="searchClosed" class="form-control rounded-4 py-3 fw-bold shadow-sm" placeholder="🔍 Buscar por Cliente, OF o Código (Ej: INNO-...)" onkeyup="filterClosedCases()">
+        </div>
+        <div id="closedList"></div>
+      </div>
+
+      <div id="tab-config" class="hidden">
+        <div class="card-custom p-4">
+          <h5 class="fw-800 mb-3">⚙️ Configurar Atributos</h5>
+          <div class="input-group mb-4">
+            <input type="text" id="newAtName" class="form-control" placeholder="Nombre del atributo...">
+            <button class="btn btn-primary fw-bold" onclick="addAtributo()">AÑADIR</button>
+          </div>
+          <div id="adminAtList" class="list-group"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://lexhsfpzenjbagxkwfmd.supabase.co'; 
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxleGhzZnB6ZW5qYmFneGt3Zm1kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMzY1MDcsImV4cCI6MjA4ODgxMjUwN30.4vWSjwrY5wHQrEmPS5MaMh7jdbQqrXbY7D_00dJ_uJU';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const ANSI_TABLE = { 2:{0.4:1, 1:1, 4:1}, 3:{0.4:1, 1:1, 4:1}, 5:{0.4:1, 1:1, 4:1}, 8:{0.4:1, 1:1, 4:2}, 13:{0.4:1, 1:1, 4:3}, 20:{0.4:1, 1:2, 4:4}, 32:{0.4:1, 1:2, 4:6}, 50:{0.4:2, 1:3, 4:8}, 80:{0.4:2, 1:4, 4:11}, 125:{0.4:3, 1:6, 4:15}, 200:{0.4:4, 1:8, 4:22}, 315:{0.4:6, 1:11, 4:22}, 500:{0.4:8, 1:15, 4:22}, 800:{0.4:11, 1:22, 4:22} };
+    
+    let ATRIBUTOS_DINAMICOS = [];
+    let admData = { inspections: [], followUp: {} }; 
+    let session = {}, currentSample = 0;
+
+    // Nuevas variables globales para filtros de búsqueda y tiempo
+    let globalDashInspections = [];
+    let globalDashFollowUps = [];
+    let globalClosedInspections = [];
+    let globalClosedMap = {};
+
+    window.onload = async () => {
+      await loadInitialData();
+      checkSession();
+    };
+
+    async function loadInitialData() {
+      document.getElementById('loader').classList.remove('hidden');
+      try {
+        const { data: ats } = await _supabase.from('config_atributos').select('*').order('creado_en', {ascending: true});
+        ATRIBUTOS_DINAMICOS = ats || [];
+        renderChecklist();
+
+        const { data: maestros } = await _supabase.from('maestros').select('*');
+        const { data: users } = await _supabase.from('usuarios').select('nombre');
+        
+        fillSelect('loginUser', (users || []).map(u => u.nombre));
+        
+        const mList = maestros || [];
+        fillSelect('f_op_ins', mList.filter(m => m.tipo.toLowerCase() === 'operario').map(m => m.valor));
+        fillSelect('f_maq', mList.filter(m => m.tipo.toLowerCase() === 'maquina').map(m => m.valor));
+        fillSelect('f_mat', mList.filter(m => m.tipo.toLowerCase() === 'material').map(m => m.valor));
+        fillSelect('f_prov', mList.filter(m => m.tipo.toLowerCase() === 'proveedor').map(m => m.valor));
+
+      } catch (e) { console.error("Error cargando maestros:", e); }
+      document.getElementById('loader').classList.add('hidden');
+    }
+
+    function renderChecklist() {
+      const tb = document.getElementById('checklistBody');
+      tb.innerHTML = ATRIBUTOS_DINAMICOS.map(at => `
+        <tr>
+          <td class="fw-bold">${at.nombre}</td>
+          <td class="text-center"><input type="radio" name="at_${at.id}" value="Conforme" class="form-check-input"><label class="small d-block">C</label></td>
+          <td class="text-center"><input type="radio" name="at_${at.id}" value="No Conforme" class="form-check-input"><label class="small d-block">NC</label></td>
+          <td class="text-center"><input type="radio" name="at_${at.id}" value="No Aplica" class="form-check-input"><label class="small d-block">NA</label></td>
+        </tr>`).join('');
+    }
+
+    async function loadDashData() {
+      document.getElementById('loader').classList.remove('hidden');
+      try {
+        const { data: ins } = await _supabase.from('inspecciones').select('*').order('creado_en', {ascending: false});
+        const { data: fol } = await _supabase.from('seguimiento_rechazos').select('inspeccion_id, estado');
+        
+        globalDashInspections = ins || [];
+        globalDashFollowUps = fol || [];
+        
+        applyDashFilter();
+        
+      } catch (err) { console.error(err); }
+      document.getElementById('loader').classList.add('hidden');
+    }
+
+    function applyDashFilter() {
+      const filter = document.getElementById('dashFilter').value;
+      const now = new Date();
+      
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      const startOfWeek = new Date(startOfDay);
+      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+      
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      let filteredIns = globalDashInspections.filter(x => {
+        if (filter === 'all') return true;
+        const d = new Date(x.creado_en);
+        if (filter === 'day') return d >= startOfDay;
+        if (filter === 'week') return d >= startOfWeek;
+        if (filter === 'month') return d >= startOfMonth;
+        return true;
+      });
+
+      const total = filteredIns.length;
+      const ok = filteredIns.filter(x => x.decision === 'Aceptado').length;
+      const rejs = filteredIns.filter(x => x.decision === 'Rechazado');
+      
+      const followMap = {};
+      globalDashFollowUps.forEach(f => { followMap[f.inspeccion_id] = f.estado; });
+
+      let eCount = 0, pCount = 0, cCount = 0;
+      rejs.forEach(r => {
+        const st = followMap[r.id] || 'Emitido';
+        if(st === 'Emitido') eCount++;
+        else if(st === 'En Proceso') pCount++;
+        else if(st === 'Cerrado') cCount++;
+      });
+
+      document.getElementById('s-total').innerText = total;
+      document.getElementById('s-ok').innerText = ok;
+      document.getElementById('s-rej').innerText = rejs.length;
+      
+      document.getElementById('s-emit').innerText = eCount;
+      document.getElementById('s-proc').innerText = pCount;
+      document.getElementById('s-cerr').innerText = cCount;
+
+      document.getElementById('dashTable').innerHTML = filteredIns.map(r => `
+        <tr>
+          <td>${r.of || '-'}</td>
+          <td>${r.cliente || '-'}</td>
+          <td><span class="badge ${r.decision==='Aceptado'?'bg-success':'bg-danger'}">${r.decision}</span></td>
+          <td>${r.inspector}</td>
+        </tr>`).join('');
+    }
+
+    async function loadFollowUpData() {
+      document.getElementById('loader').classList.remove('hidden');
+      const { data: inspections } = await _supabase.from('inspecciones').select('*').eq('decision', 'Rechazado');
+      const { data: followUps } = await _supabase.from('seguimiento_rechazos').select('*');
+      
+      admData.inspections = inspections || [];
+      admData.followUp = {};
+      (followUps || []).forEach(f => { admData.followUp[f.inspeccion_id] = f; });
+      
+      renderFollowUp();
+      document.getElementById('loader').classList.add('hidden');
+    }
+
+    function renderFollowUp() {
+      const baseIns = admData.inspections || [];
+      const followMap = admData.followUp || {};
+      const rejs = baseIns.filter(i => (followMap[i.id] || { estado: 'Emitido' }).estado !== 'Cerrado');
+      
+      if (rejs.length === 0) {
+        document.getElementById('followList').innerHTML = `<div class="card-custom p-5 text-center shadow-sm text-success fw-bold">¡Todo al día!</div>`;
+        return;
+      }
+
+      document.getElementById('followList').innerHTML = rejs.reverse().map(r => {
+        const s = followMap[r.id] || { 
+            accion_correctiva:'', accion_mitigacion:'', accion_mejora:'', estado:'Emitido',
+            porque_1:'', porque_2:'', porque_3:'', porque_4:'', porque_5:'',
+            causa_raiz_identificada: '', responsable_aplicacion: '', fecha_compromiso: ''
+        };
+        
+        let bClass = s.estado === 'En Proceso' ? 'bg-warning text-dark' : 'bg-danger';
+        let panelHidden = (s.estado === 'Emitido') ? 'hidden' : '';
+
+        return `
+        <div class="card-custom border-start border-danger border-5 p-3 mb-4 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="m-0 fw-bold">${r.id} <span class="text-muted fw-normal">| OF: ${r.of || '-'}</span></h6>
+            <span class="badge ${bClass}" id="badge_${r.id}">${s.estado}</span>
+          </div>
+          
+          <div class="row g-2 mb-3 small bg-light p-3 rounded-3 border">
+            <div class="col-md-2"><b>Operario:</b> <br>${r.operario}</div>
+            <div class="col-md-2"><b>Inspector:</b> <br>${r.inspector}</div>
+            <div class="col-md-2"><b>Fecha:</b> <br>${r.fecha_inspeccion || '-'}</div>
+            <div class="col-md-2"><b>Cliente:</b> <br>${r.cliente || '-'}</div>
+            <div class="col-md-2"><b>Cód. Producto:</b> <br>${r.codigo_producto || '-'}</div>
+            <div class="col-md-2"><b>Color:</b> <br>${r.color || '-'}</div>
+            <div class="col-md-4 mt-2 border-top pt-2"><b>Motivo de Rechazo:</b> <br>${r.motivo_rechazo || '-'}</div>
+            <div class="col-md-8 mt-2 border-top pt-2"><b>Comentarios:</b> <br>${r.comentarios || '-'}</div>
+          </div>
+
+          <div class="row g-3 align-items-center mb-2">
+            <div class="col-md-8 d-flex align-items-center">
+              <label class="me-2 fw-bold">Estado:</label>
+              <select id="e_${r.id}" class="form-select w-auto fw-bold" onchange="toggleGestionPanel('${r.id}')">
+                <option value="Emitido" ${s.estado==='Emitido'?'selected':''}>Emitido</option>
+                <option value="En Proceso" ${s.estado==='En Proceso'?'selected':''}>En Proceso</option>
+                <option value="Cerrado" ${s.estado==='Cerrado'?'selected':''}>Cerrado</option>
+              </select>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-dark w-100 fw-bold shadow-sm" onclick="saveAdminAction('${r.id}')">GUARDAR</button>
+            </div>
+          </div>
+
+          <div id="gestion_panel_${r.id}" class="${panelHidden} mt-3 pt-3 border-top">
+             <button class="btn btn-outline-primary btn-sm fw-bold w-100 mb-3 rounded-3" onclick="toggle5Whys('${r.id}')">
+                🔍 Análisis de Causa Raíz (5 Porqués)
+             </button>
+
+             <div id="whys_panel_${r.id}" class="hidden bg-light p-3 rounded-3 border mb-3">
+                 <h6 class="fw-bold text-primary small mb-3">METODOLOGÍA 5 PORQUÉS</h6>
+                 <div class="mb-2 d-flex align-items-center"><span class="fw-bold me-2 text-muted">1.</span><input type="text" id="p1_${r.id}" class="form-control form-control-sm" placeholder="¿Por qué ocurrió el problema?" value="${s.porque_1 || ''}"></div>
+                 <div class="mb-2 d-flex align-items-center"><span class="fw-bold me-2 text-muted">2.</span><input type="text" id="p2_${r.id}" class="form-control form-control-sm" placeholder="¿Por qué?" value="${s.porque_2 || ''}"></div>
+                 <div class="mb-2 d-flex align-items-center"><span class="fw-bold me-2 text-muted">3.</span><input type="text" id="p3_${r.id}" class="form-control form-control-sm" placeholder="¿Por qué?" value="${s.porque_3 || ''}"></div>
+                 <div class="mb-2 d-flex align-items-center"><span class="fw-bold me-2 text-muted">4.</span><input type="text" id="p4_${r.id}" class="form-control form-control-sm" placeholder="¿Por qué?" value="${s.porque_4 || ''}"></div>
+                 <div class="mb-3 d-flex align-items-center"><span class="fw-bold me-2 text-muted">5.</span><input type="text" id="p5_${r.id}" class="form-control form-control-sm" placeholder="Causa Raíz" value="${s.porque_5 || ''}"></div>
+                 
+                 <div class="mt-3 pt-3 border-top">
+                    <label class="fw-bold text-muted small d-block mb-1">Causa Raíz Identificada</label>
+                    <input type="text" id="cri_${r.id}" class="form-control form-control-sm mb-3" placeholder="Especifique la causa raíz..." value="${s.causa_raiz_identificada || ''}">
+                    
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="fw-bold text-muted small d-block mb-1">Responsable de aplicación</label>
+                            <input type="text" id="resp_${r.id}" class="form-control form-control-sm" placeholder="Nombre del responsable" value="${s.responsable_aplicacion || ''}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold text-muted small d-block mb-1">Fecha de compromiso</label>
+                            <input type="date" id="fc_${r.id}" class="form-control form-control-sm" value="${s.fecha_compromiso || ''}">
+                        </div>
+                    </div>
+                 </div>
+             </div>
+
+             <div class="row g-3">
+               <div class="col-md-4"><label class="form-label text-primary">Acción Mitigación</label><textarea id="m_${r.id}" class="form-control" rows="3">${s.accion_mitigacion || ''}</textarea></div>
+               <div class="col-md-4"><label class="form-label text-primary">Acción Correctiva</label><textarea id="c_${r.id}" class="form-control" rows="3">${s.accion_correctiva || ''}</textarea></div>
+               <div class="col-md-4"><label class="form-label text-primary">Acción de Mejora</label><textarea id="j_${r.id}" class="form-control" rows="3">${s.accion_mejora || ''}</textarea></div>
+             </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function loadClosedData() {
+      document.getElementById('loader').classList.remove('hidden');
+      const { data: inspections } = await _supabase.from('inspecciones').select('*').eq('decision', 'Rechazado');
+      const { data: followUps } = await _supabase.from('seguimiento_rechazos').select('*').eq('estado', 'Cerrado');
+      
+      let closedMap = {};
+      (followUps || []).forEach(f => { closedMap[f.inspeccion_id] = f; });
+      
+      globalClosedInspections = (inspections || []).filter(i => closedMap[i.id]);
+      globalClosedMap = closedMap;
+      
+      renderClosedList(globalClosedInspections, globalClosedMap);
+      document.getElementById('loader').classList.add('hidden');
+    }
+
+    function filterClosedCases() {
+      const q = document.getElementById('searchClosed').value.toLowerCase();
+      const filtered = globalClosedInspections.filter(r => {
+        const idMatch = (r.id || '').toLowerCase().includes(q);
+        const cliMatch = (r.cliente || '').toLowerCase().includes(q);
+        const ofMatch = (r.of || '').toLowerCase().includes(q);
+        return idMatch || cliMatch || ofMatch;
+      });
+      renderClosedList(filtered, globalClosedMap);
+    }
+
+    function renderClosedList(inspections, followMap) {
+      if (inspections.length === 0) {
+        document.getElementById('closedList').innerHTML = `<div class="card-custom p-5 text-center shadow-sm text-muted fw-bold">Aún no hay casos cerrados registrados.</div>`;
+        return;
+      }
+
+      document.getElementById('closedList').innerHTML = inspections.reverse().map(r => {
+        const s = followMap[r.id];
+
+        return `
+        <div class="card-custom border-start border-primary border-5 p-3 mb-4 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="m-0 fw-bold">${r.id} <span class="text-muted fw-normal">| OF: ${r.of || '-'}</span></h6>
+            <span class="badge bg-primary">Cerrado</span>
+          </div>
+          
+          <div class="row g-2 mb-3 small bg-light p-3 rounded-3 border">
+            <div class="col-md-2"><b>Operario:</b> <br>${r.operario}</div>
+            <div class="col-md-2"><b>Inspector:</b> <br>${r.inspector}</div>
+            <div class="col-md-2"><b>Fecha:</b> <br>${r.fecha_inspeccion || '-'}</div>
+            <div class="col-md-2"><b>Cliente:</b> <br>${r.cliente || '-'}</div>
+            <div class="col-md-2"><b>Cód. Producto:</b> <br>${r.codigo_producto || '-'}</div>
+            <div class="col-md-2"><b>Color:</b> <br>${r.color || '-'}</div>
+            <div class="col-md-4 mt-2 border-top pt-2"><b>Motivo de Rechazo:</b> <br>${r.motivo_rechazo || '-'}</div>
+            <div class="col-md-8 mt-2 border-top pt-2"><b>Comentarios:</b> <br>${r.comentarios || '-'}</div>
+          </div>
+
+          <div class="bg-light p-3 rounded-3 border mb-3">
+             <h6 class="fw-bold text-primary small mb-3">RESOLUCIÓN DEL CASO</h6>
+             
+             <div class="mb-2 d-flex align-items-center small">
+                 <span class="fw-bold me-2 text-dark">Causa Raíz Identificada:</span> 
+                 <span class="text-muted">${s.causa_raiz_identificada || s.porque_5 || 'No registrada'}</span>
+             </div>
+             <div class="mb-3 d-flex align-items-center small">
+                 <span class="fw-bold me-2 text-dark">Responsable de aplicación:</span> <span class="text-muted me-4">${s.responsable_aplicacion || '-'}</span>
+                 <span class="fw-bold me-2 text-dark">Fecha compromiso:</span> <span class="text-muted">${s.fecha_compromiso || '-'}</span>
+             </div>
+
+             <div class="row g-3 border-top pt-2 small">
+               <div class="col-md-4"><span class="fw-bold text-primary d-block">Acción Mitigación</span><span class="text-muted">${s.accion_mitigacion || '-'}</span></div>
+               <div class="col-md-4"><span class="fw-bold text-primary d-block">Acción Correctiva</span><span class="text-muted">${s.accion_correctiva || '-'}</span></div>
+               <div class="col-md-4"><span class="fw-bold text-primary d-block">Acción de Mejora</span><span class="text-muted">${s.accion_mejora || '-'}</span></div>
+             </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function toggleGestionPanel(id) {
+      const val = document.getElementById('e_' + id).value;
+      const panel = document.getElementById('gestion_panel_' + id);
+      const badge = document.getElementById('badge_' + id);
+      
+      badge.innerText = val;
+      badge.className = "badge " + (val === 'En Proceso' ? 'bg-warning text-dark' : (val === 'Cerrado' ? 'bg-primary' : 'bg-danger'));
+
+      if(val === 'En Proceso' || val === 'Cerrado') {
+          panel.classList.remove('hidden');
+      } else {
+          panel.classList.add('hidden');
+      }
+    }
+
+    function toggle5Whys(id) {
+        document.getElementById('whys_panel_' + id).classList.toggle('hidden');
+    }
+
+    async function saveAdminAction(id) {
+      document.getElementById('loader').classList.remove('hidden');
+      
+      const getVal = (elId) => document.getElementById(elId) ? document.getElementById(elId).value : '';
+
+      const payload = {
+        inspeccion_id: id,
+        accion_mitigacion: getVal('m_'+id),
+        accion_correctiva: getVal('c_'+id),
+        accion_mejora: getVal('j_'+id),
+        porque_1: getVal('p1_'+id),
+        porque_2: getVal('p2_'+id),
+        porque_3: getVal('p3_'+id),
+        porque_4: getVal('p4_'+id),
+        porque_5: getVal('p5_'+id),
+        
+        causa_raiz_identificada: getVal('cri_'+id),
+        responsable_aplicacion: getVal('resp_'+id),
+        fecha_compromiso: getVal('fc_'+id) || null,
+
+        estado: getVal('e_'+id),
+        actualizado_por: session.user,
+        fecha_actualizacion: new Date().toISOString()
+      };
+      
+      const { error } = await _supabase.from('seguimiento_rechazos').upsert([payload], { onConflict: 'inspeccion_id' });
+      if(!error) { alert("¡Guardado correctamente!"); loadFollowUpData(); }
+      else { alert("Hubo un error al guardar: " + error.message); }
+      
+      document.getElementById('loader').classList.add('hidden');
+    }
+
+    async function handleSave() {
+      const dec = document.querySelector('input[name="decision"]:checked');
+      if(!dec) return alert("Seleccione decisión");
+      
+      let checks = {};
+      for(let at of ATRIBUTOS_DINAMICOS) {
+        let sel = document.querySelector(`input[name="at_${at.id}"]:checked`);
+        if(!sel) return alert("Falta: " + at.nombre);
+        checks[at.nombre] = sel.value;
+      }
+
+      const crit = document.getElementById('f_criticidad').value;
+      let aql = "";
+      let reLimitValue = "";
+
+      if(crit) {
+          aql = (crit === "Crítico") ? "0.4" : (crit === "Mayor") ? "1.0" : (crit === "Leve") ? "4.0" : "";
+          if (aql && currentSample && ANSI_TABLE[currentSample]) {
+              reLimitValue = ANSI_TABLE[currentSample][parseFloat(aql)];
+          }
+      }
+
+      const payload = {
+        id: "INNO-" + Date.now(),
+        inspector: session.user,
+        operario: document.getElementById('f_op_ins').value,
+        maquina: document.getElementById('f_maq').value,
+        fecha_inspeccion: document.getElementById('f_fecha').value,
+        of: document.getElementById('f_of').value,
+        cliente: document.getElementById('f_cliente').value,
+        proveedor: document.getElementById('f_prov').value,
+        material: document.getElementById('f_mat').value,
+        color: document.getElementById('f_color').value,
+        dimensiones: document.getElementById('f_dims').value,
+        inpa: document.getElementById('f_inpa').value,
+        codigo_producto: document.getElementById('f_codProd').value,
+        ansi: document.getElementById('displayANSI').innerText,
+        criticidad: crit,
+        motivo_rechazo: (dec.value === 'Rechazado') ? document.getElementById('f_motivo_rechazo').value : '',
+        aql_val: aql,
+        re_limit: reLimitValue ? reLimitValue.toString() : "",
+        checklist: checks,
+        decision: dec.value,
+        comentarios: document.getElementById('f_comments').value,
+        rollos: document.getElementById('f_rollos').value
+      };
+
+      const { error } = await _supabase.from('inspecciones').insert([payload]);
+      if(!error) { 
+        alert("¡Registro guardado correctamente!"); 
+        location.reload(); 
+      } else {
+        console.error(error);
+        alert("Error al guardar: " + error.message);
+      }
+    }
+
+    function showTab(t) {
+      ['tab-form', 'tab-dash', 'tab-follow', 'tab-closed', 'tab-config'].forEach(x => document.getElementById(x).classList.add('hidden'));
+      document.getElementById('tab-' + t).classList.remove('hidden');
+      if(t === 'dash') loadDashData();
+      if(t === 'follow') loadFollowUpData();
+      if(t === 'closed') loadClosedData(); 
+      if(t === 'config') renderAdminAtList();
+      if(t === 'form') document.getElementById('f_fecha').valueAsDate = new Date();
+    }
+
+    function checkSession() {
+      const saved = JSON.parse(localStorage.getItem('inno_supabase_session'));
+      if (saved) { session = saved; initUI(); }
+    }
+
+    function initUI() {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('mainView').classList.remove('hidden');
+      document.getElementById('displayName').innerText = session.user;
+      if (session.role === "Admin" || session.role === "Administrador") {
+        document.getElementById('adminMenu').classList.remove('hidden');
+        showTab('dash');
+      } else { showTab('form'); }
+    }
+
+    async function handleLogin() {
+      const u = document.getElementById('loginUser').value, p = document.getElementById('loginPass').value;
+      const { data } = await _supabase.from('usuarios').select('*').eq('nombre', u).eq('password', p).single();
+      if (data) {
+        session = { user: data.nombre, role: data.rol };
+        localStorage.setItem('inno_supabase_session', JSON.stringify(session));
+        initUI();
+      } else { document.getElementById('loginError').innerText = "Credenciales inválidas"; }
+    }
+
+    function fillSelect(id, list) { 
+      const el = document.getElementById(id);
+      if(el && list) el.innerHTML = list.map(x => `<option value="${x}">${x}</option>`).join(''); 
+    }
+    
+    function handleLogout() { localStorage.removeItem('inno_supabase_session'); location.reload(); }
+    
+    function updateANSI() {
+      const l = parseInt(document.getElementById('f_rollos').value) || 0;
+      currentSample = l < 9 ? 2 : l < 16 ? 3 : l < 26 ? 5 : l < 51 ? 8 : l < 91 ? 13 : l < 151 ? 20 : l < 281 ? 32 : l < 501 ? 50 : l < 1201 ? 80 : 125;
+      document.getElementById('displayANSI').innerText = currentSample;
+    }
+    
+    function toggleRechazo() { document.getElementById('rejectionSection').classList.toggle('hidden', !document.getElementById('decR').checked); }
+    
+    function calcRejection() {
+      const crit = document.getElementById('f_criticidad').value;
+      if (!crit || !currentSample) return;
+      const aql = (crit === "Crítico") ? 0.4 : (crit === "Mayor") ? 1.0 : 4.0;
+      const re = ANSI_TABLE[currentSample][aql];
+      document.getElementById('rejectionResult').innerText = `Límite Re: ${re} defectos`;
+    }
+    
+    async function addAtributo() {
+      const n = document.getElementById('newAtName').value;
+      if(!n) return;
+      await _supabase.from('config_atributos').insert([{ nombre: n }]);
+      document.getElementById('newAtName').value = "";
+      await loadInitialData();
+    }
+    
+    async function deleteAtributo(id) {
+      if(!confirm("¿Eliminar?")) return;
+      await _supabase.from('config_atributos').delete().eq('id', id);
+      await loadInitialData();
+    }
+    
+    function renderAdminAtList() {
+      document.getElementById('adminAtList').innerHTML = ATRIBUTOS_DINAMICOS.map(at => `
+        <div class="list-group-item d-flex justify-content-between align-items-center mb-2 border rounded-4">
+          <span>${at.nombre}</span>
+          <button class="btn btn-sm btn-danger" onclick="deleteAtributo('${at.id}')">Eliminar</button>
+        </div>`).join('');
+    }
+  </script>
+</body>
+</html>
