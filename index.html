@@ -11,7 +11,7 @@
 
   <style>
     :root { --primary: #6366f1; --dark-bg: #0f172a; --text-muted: #64748b; }
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; min-height: 100vh; margin: 0; padding-bottom: 30px; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; min-height: 100vh; margin: 0; padding-bottom: 30px; overflow-x: hidden; }
     .logo-img { width: 100px; height: 100px; object-fit: contain; margin-bottom: 15px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: 3px solid white; }
     .nav-inno { background: var(--dark-bg); padding: 12px 0; color: white; position: sticky; top: 0; z-index: 1000; }
     .card-custom { background: white; border: none; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 20px; }
@@ -49,10 +49,10 @@
 
   <div id="mainView" class="hidden">
     <nav class="nav-inno mb-4 shadow-sm">
-      <div class="container px-3 d-flex justify-content-between align-items-center">
+      <div class="container px-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div class="fw-800 fs-4">INNO</div>
         <div class="d-flex align-items-center">
-          <span id="displayName" class="small fw-bold me-3"></span>
+          <span id="displayName" class="small fw-bold me-3 text-truncate" style="max-width: 120px;"></span>
           <button class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="handleLogout()">SALIR</button>
         </div>
       </div>
@@ -61,12 +61,12 @@
     <div class="container px-2" style="max-width: 900px;">
       
       <div id="adminMenu" class="mb-4 hidden">
-        <div class="btn-group w-100 shadow-sm rounded-4 overflow-hidden">
-          <button id="btn-tab-form" class="btn btn-white border py-3 fw-bold" onclick="showTab('form')">Formulario</button>
-          <button id="btn-tab-dash" class="btn btn-white border py-3 fw-bold" onclick="showTab('dash')">Dashboard</button>
-          <button id="btn-tab-follow" class="btn btn-white border py-3 fw-bold" onclick="showTab('follow')" style="font-size: 0.85rem;">Gestión de No Conformidades</button>
-          <button id="btn-tab-closed" class="btn btn-white border py-3 fw-bold" onclick="showTab('closed')" style="font-size: 0.85rem;">Casos Cerrados</button>
-          <button id="btn-tab-config" class="btn btn-white border py-3 fw-bold text-primary" onclick="showTab('config')">⚙️ Config</button>
+        <div class="d-flex flex-column flex-md-row w-100 shadow-sm rounded-4 overflow-hidden">
+          <button id="btn-tab-form" class="btn btn-white border py-3 fw-bold w-100" onclick="showTab('form')">Formulario</button>
+          <button id="btn-tab-dash" class="btn btn-white border py-3 fw-bold w-100" onclick="showTab('dash')">Dashboard</button>
+          <button id="btn-tab-follow" class="btn btn-white border py-3 fw-bold w-100" onclick="showTab('follow')" style="font-size: 0.85rem;">Gestión de NC</button>
+          <button id="btn-tab-closed" class="btn btn-white border py-3 fw-bold w-100" onclick="showTab('closed')" style="font-size: 0.85rem;">Casos Cerrados</button>
+          <button id="btn-tab-config" class="btn btn-white border py-3 fw-bold text-primary w-100" onclick="showTab('config')">⚙️ Config</button>
         </div>
       </div>
 
@@ -79,13 +79,13 @@
               <div class="col-md-6"><label class="form-label">Máquina</label><select id="f_maq" class="form-select"></select></div>
               <div class="col-6 col-md-4"><label class="form-label">Fecha</label><input type="date" id="f_fecha" class="form-control"></div>
               <div class="col-6 col-md-4"><label class="form-label">OF</label><input type="text" id="f_of" class="form-control"></div>
-              <div class="col-md-4"><label class="form-label">Cliente</label><input type="text" id="f_cliente" class="form-control"></div>
-              <div class="col-md-4"><label class="form-label">Cód. Producto</label><input type="text" id="f_codProd" class="form-control"></div>
-              <div class="col-md-4"><label class="form-label">Material</label><select id="f_mat" class="form-select"></select></div>
-              <div class="col-md-4"><label class="form-label">Proveedor</label><select id="f_prov" class="form-select"></select></div>
-              <div class="col-md-4"><label class="form-label">Color</label><input type="text" id="f_color" class="form-control"></div>
-              <div class="col-md-4"><label class="form-label">Dimensiones</label><input type="text" id="f_dims" class="form-control"></div>
-              <div class="col-md-4"><label class="form-label">INPA</label><input type="text" id="f_inpa" class="form-control"></div>
+              <div class="col-12 col-md-4"><label class="form-label">Cliente</label><input type="text" id="f_cliente" class="form-control"></div>
+              <div class="col-12 col-md-4"><label class="form-label">Cód. Producto</label><input type="text" id="f_codProd" class="form-control"></div>
+              <div class="col-12 col-md-4"><label class="form-label">Material</label><select id="f_mat" class="form-select"></select></div>
+              <div class="col-12 col-md-4"><label class="form-label">Proveedor</label><select id="f_prov" class="form-select"></select></div>
+              <div class="col-6 col-md-4"><label class="form-label">Color</label><input type="text" id="f_color" class="form-control"></div>
+              <div class="col-6 col-md-4"><label class="form-label">Dimensiones</label><input type="text" id="f_dims" class="form-control"></div>
+              <div class="col-12 col-md-4"><label class="form-label">INPA</label><input type="text" id="f_inpa" class="form-control"></div>
               <div class="col-8 col-md-9"><label class="form-label">Lote (Rollos)</label><input type="number" id="f_rollos" class="form-control" oninput="updateANSI()"></div>
               <div class="col-4 col-md-3"><div class="ansi-box"><small class="fw-bold opacity-50" style="font-size:0.6rem">ANSI II</small><div id="displayANSI" class="h4 fw-800 m-0 text-primary">-</div></div></div>
             </div>
@@ -99,8 +99,8 @@
 
         <div class="card-custom mb-4 p-3 text-center">
           <div class="row g-2 mb-4">
-            <div class="col-6"><input type="radio" class="btn-check" name="decision" id="decA" value="Aceptado" onchange="toggleRechazo()"><label class="btn btn-outline-success w-100 py-3 fw-bold rounded-4" for="decA">ACEPTADO ✅</label></div>
-            <div class="col-6"><input type="radio" class="btn-check" name="decision" id="decR" value="Rechazado" onchange="toggleRechazo()"><label class="btn btn-outline-danger w-100 py-3 rounded-4" for="decR">RECHAZADO ❌</label></div>
+            <div class="col-12 col-sm-6"><input type="radio" class="btn-check" name="decision" id="decA" value="Aceptado" onchange="toggleRechazo()"><label class="btn btn-outline-success w-100 py-3 fw-bold rounded-4" for="decA">ACEPTADO ✅</label></div>
+            <div class="col-12 col-sm-6"><input type="radio" class="btn-check" name="decision" id="decR" value="Rechazado" onchange="toggleRechazo()"><label class="btn btn-outline-danger w-100 py-3 rounded-4" for="decR">RECHAZADO ❌</label></div>
           </div>
           <div id="rejectionSection" class="hidden text-start mb-3">
              <label class="form-label">Criticidad</label>
@@ -144,7 +144,7 @@
       </div>
 
       <div id="tab-dash" class="hidden">
-        <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 px-1 gap-2">
           <h6 class="fw-800 m-0">Resultados de inspección</h6>
           <select id="dashFilter" class="form-select w-auto form-select-sm fw-bold border-secondary text-primary rounded-3" onchange="applyDashFilter()">
             <option value="all">Todo</option>
@@ -155,16 +155,16 @@
         </div>
         
         <div class="row g-2 mb-4 text-center">
-          <div class="col-4"><div class="stat-card"><span id="s-total" class="stat-val">0</span><small>TOTAL</small></div></div>
-          <div class="col-4"><div class="stat-card" style="border-color:#22c55e"><span id="s-ok" class="stat-val text-success">0</span><small>Aceptado</small></div></div>
-          <div class="col-4"><div class="stat-card" style="border-color:#ef4444"><span id="s-rej" class="stat-val text-danger">0</span><small>Rechazado</small></div></div>
+          <div class="col-12 col-md-4"><div class="stat-card"><span id="s-total" class="stat-val">0</span><small>TOTAL</small></div></div>
+          <div class="col-12 col-md-4"><div class="stat-card" style="border-color:#22c55e"><span id="s-ok" class="stat-val text-success">0</span><small>Aceptado</small></div></div>
+          <div class="col-12 col-md-4"><div class="stat-card" style="border-color:#ef4444"><span id="s-rej" class="stat-val text-danger">0</span><small>Rechazado</small></div></div>
         </div>
 
         <h6 class="fw-800 mb-3 px-1">Seguimiento de rechazos</h6>
         <div class="row g-2 mb-4 text-center">
-          <div class="col-4"><div class="stat-card" style="border-color:#64748b; background: #f8fafc;"><span id="s-emit" class="stat-val text-secondary" style="font-size:1.3rem">0</span><small style="font-size:0.65rem">Emitidos</small></div></div>
-          <div class="col-4"><div class="stat-card" style="border-color:#f59e0b; background: #fffbeb;"><span id="s-proc" class="stat-val text-warning" style="font-size:1.3rem">0</span><small style="font-size:0.65rem">En Proceso</small></div></div>
-          <div class="col-4"><div class="stat-card" style="border-color:#3b82f6; background: #eff6ff;"><span id="s-cerr" class="stat-val text-primary" style="font-size:1.3rem">0</span><small style="font-size:0.65rem">Cerrados</small></div></div>
+          <div class="col-12 col-md-4"><div class="stat-card" style="border-color:#64748b; background: #f8fafc;"><span id="s-emit" class="stat-val text-secondary" style="font-size:1.3rem">0</span><small style="font-size:0.65rem">Emitidos</small></div></div>
+          <div class="col-12 col-md-4"><div class="stat-card" style="border-color:#f59e0b; background: #fffbeb;"><span id="s-proc" class="stat-val text-warning" style="font-size:1.3rem">0</span><small style="font-size:0.65rem">En Proceso</small></div></div>
+          <div class="col-12 col-md-4"><div class="stat-card" style="border-color:#3b82f6; background: #eff6ff;"><span id="s-cerr" class="stat-val text-primary" style="font-size:1.3rem">0</span><small style="font-size:0.65rem">Cerrados</small></div></div>
         </div>
 
         <div class="card-custom p-3">
@@ -191,9 +191,9 @@
       <div id="tab-config" class="hidden">
         <div class="card-custom p-4">
           <h5 class="fw-800 mb-3">⚙️ Configurar Atributos</h5>
-          <div class="input-group mb-4">
-            <input type="text" id="newAtName" class="form-control" placeholder="Nombre del atributo...">
-            <button class="btn btn-primary fw-bold" onclick="addAtributo()">AÑADIR</button>
+          <div class="input-group flex-wrap mb-4">
+            <input type="text" id="newAtName" class="form-control w-100 mb-2 mb-md-0" style="min-width: 200px;" placeholder="Nombre del atributo...">
+            <button class="btn btn-primary fw-bold w-100 w-md-auto" onclick="addAtributo()">AÑADIR</button>
           </div>
           <div id="adminAtList" class="list-group"></div>
         </div>
@@ -359,32 +359,32 @@
 
         return `
         <div class="card-custom border-start border-danger border-5 p-3 mb-4 shadow-sm">
-          <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
             <h6 class="m-0 fw-bold">${r.id} <span class="text-muted fw-normal">| OF: ${r.of || '-'}</span></h6>
             <span class="badge ${bClass}" id="badge_${r.id}">${s.estado}</span>
           </div>
           
           <div class="row g-2 mb-3 small bg-light p-3 rounded-3 border">
-            <div class="col-md-2"><b>Operario:</b> <br>${r.operario}</div>
-            <div class="col-md-2"><b>Inspector:</b> <br>${r.inspector}</div>
-            <div class="col-md-2"><b>Fecha:</b> <br>${r.fecha_inspeccion || '-'}</div>
-            <div class="col-md-2"><b>Cliente:</b> <br>${r.cliente || '-'}</div>
-            <div class="col-md-2"><b>Cód. Producto:</b> <br>${r.codigo_producto || '-'}</div>
-            <div class="col-md-2"><b>Color:</b> <br>${r.color || '-'}</div>
-            <div class="col-md-4 mt-2 border-top pt-2"><b>Motivo de Rechazo:</b> <br>${r.motivo_rechazo || '-'}</div>
-            <div class="col-md-8 mt-2 border-top pt-2"><b>Comentarios:</b> <br>${r.comentarios || '-'}</div>
+            <div class="col-6 col-md-2"><b>Operario:</b> <br>${r.operario}</div>
+            <div class="col-6 col-md-2"><b>Inspector:</b> <br>${r.inspector}</div>
+            <div class="col-6 col-md-2"><b>Fecha:</b> <br>${r.fecha_inspeccion || '-'}</div>
+            <div class="col-6 col-md-2"><b>Cliente:</b> <br>${r.cliente || '-'}</div>
+            <div class="col-6 col-md-2"><b>Cód. Producto:</b> <br>${r.codigo_producto || '-'}</div>
+            <div class="col-6 col-md-2"><b>Color:</b> <br>${r.color || '-'}</div>
+            <div class="col-12 col-md-4 mt-2 border-top pt-2"><b>Motivo de Rechazo:</b> <br>${r.motivo_rechazo || '-'}</div>
+            <div class="col-12 col-md-8 mt-2 border-top pt-2"><b>Comentarios:</b> <br>${r.comentarios || '-'}</div>
           </div>
 
           <div class="row g-3 align-items-center mb-2">
-            <div class="col-md-8 d-flex align-items-center">
-              <label class="me-2 fw-bold">Estado:</label>
+            <div class="col-12 col-md-8 d-flex flex-wrap align-items-center gap-2">
+              <label class="fw-bold">Estado:</label>
               <select id="e_${r.id}" class="form-select w-auto fw-bold" onchange="toggleGestionPanel('${r.id}')">
                 <option value="Emitido" ${s.estado==='Emitido'?'selected':''}>Emitido</option>
                 <option value="En Proceso" ${s.estado==='En Proceso'?'selected':''}>En Proceso</option>
                 <option value="Cerrado" ${s.estado==='Cerrado'?'selected':''}>Cerrado</option>
               </select>
             </div>
-            <div class="col-md-4 text-end">
+            <div class="col-12 col-md-4 text-end">
                 <button class="btn btn-dark w-100 fw-bold shadow-sm" onclick="saveAdminAction('${r.id}')">GUARDAR</button>
             </div>
           </div>
@@ -396,22 +396,22 @@
 
              <div id="whys_panel_${r.id}" class="hidden bg-light p-3 rounded-3 border mb-3">
                  <h6 class="fw-bold text-primary small mb-3">METODOLOGÍA 5 PORQUÉS</h6>
-                 <div class="mb-2 d-flex align-items-center"><span class="fw-bold me-2 text-muted">1.</span><input type="text" id="p1_${r.id}" class="form-control form-control-sm" placeholder="¿Por qué ocurrió el problema?" value="${s.porque_1 || ''}"></div>
-                 <div class="mb-2 d-flex align-items-center"><span class="fw-bold me-2 text-muted">2.</span><input type="text" id="p2_${r.id}" class="form-control form-control-sm" placeholder="¿Por qué?" value="${s.porque_2 || ''}"></div>
-                 <div class="mb-2 d-flex align-items-center"><span class="fw-bold me-2 text-muted">3.</span><input type="text" id="p3_${r.id}" class="form-control form-control-sm" placeholder="¿Por qué?" value="${s.porque_3 || ''}"></div>
-                 <div class="mb-2 d-flex align-items-center"><span class="fw-bold me-2 text-muted">4.</span><input type="text" id="p4_${r.id}" class="form-control form-control-sm" placeholder="¿Por qué?" value="${s.porque_4 || ''}"></div>
-                 <div class="mb-3 d-flex align-items-center"><span class="fw-bold me-2 text-muted">5.</span><input type="text" id="p5_${r.id}" class="form-control form-control-sm" placeholder="Causa Raíz" value="${s.porque_5 || ''}"></div>
+                 <div class="mb-2 d-flex flex-wrap align-items-center gap-1"><span class="fw-bold text-muted w-100">1.</span><input type="text" id="p1_${r.id}" class="form-control form-control-sm" placeholder="¿Por qué ocurrió el problema?" value="${s.porque_1 || ''}"></div>
+                 <div class="mb-2 d-flex flex-wrap align-items-center gap-1"><span class="fw-bold text-muted w-100">2.</span><input type="text" id="p2_${r.id}" class="form-control form-control-sm" placeholder="¿Por qué?" value="${s.porque_2 || ''}"></div>
+                 <div class="mb-2 d-flex flex-wrap align-items-center gap-1"><span class="fw-bold text-muted w-100">3.</span><input type="text" id="p3_${r.id}" class="form-control form-control-sm" placeholder="¿Por qué?" value="${s.porque_3 || ''}"></div>
+                 <div class="mb-2 d-flex flex-wrap align-items-center gap-1"><span class="fw-bold text-muted w-100">4.</span><input type="text" id="p4_${r.id}" class="form-control form-control-sm" placeholder="¿Por qué?" value="${s.porque_4 || ''}"></div>
+                 <div class="mb-3 d-flex flex-wrap align-items-center gap-1"><span class="fw-bold text-muted w-100">5.</span><input type="text" id="p5_${r.id}" class="form-control form-control-sm" placeholder="Causa Raíz" value="${s.porque_5 || ''}"></div>
                  
                  <div class="mt-3 pt-3 border-top">
                     <label class="fw-bold text-muted small d-block mb-1">Causa Raíz Identificada</label>
                     <input type="text" id="cri_${r.id}" class="form-control form-control-sm mb-3" placeholder="Especifique la causa raíz..." value="${s.causa_raiz_identificada || ''}">
                     
                     <div class="row g-2">
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="fw-bold text-muted small d-block mb-1">Responsable de aplicación</label>
                             <input type="text" id="resp_${r.id}" class="form-control form-control-sm" placeholder="Nombre del responsable" value="${s.responsable_aplicacion || ''}">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="fw-bold text-muted small d-block mb-1">Fecha de compromiso</label>
                             <input type="date" id="fc_${r.id}" class="form-control form-control-sm" value="${s.fecha_compromiso || ''}">
                         </div>
@@ -420,9 +420,9 @@
              </div>
 
              <div class="row g-3">
-               <div class="col-md-4"><label class="form-label text-primary">Acción Mitigación</label><textarea id="m_${r.id}" class="form-control" rows="3">${s.accion_mitigacion || ''}</textarea></div>
-               <div class="col-md-4"><label class="form-label text-primary">Acción Correctiva</label><textarea id="c_${r.id}" class="form-control" rows="3">${s.accion_correctiva || ''}</textarea></div>
-               <div class="col-md-4"><label class="form-label text-primary">Acción de Mejora</label><textarea id="j_${r.id}" class="form-control" rows="3">${s.accion_mejora || ''}</textarea></div>
+               <div class="col-12 col-md-4"><label class="form-label text-primary">Acción Mitigación</label><textarea id="m_${r.id}" class="form-control" rows="3">${s.accion_mitigacion || ''}</textarea></div>
+               <div class="col-12 col-md-4"><label class="form-label text-primary">Acción Correctiva</label><textarea id="c_${r.id}" class="form-control" rows="3">${s.accion_correctiva || ''}</textarea></div>
+               <div class="col-12 col-md-4"><label class="form-label text-primary">Acción de Mejora</label><textarea id="j_${r.id}" class="form-control" rows="3">${s.accion_mejora || ''}</textarea></div>
              </div>
           </div>
         </div>`;
@@ -466,38 +466,38 @@
 
         return `
         <div class="card-custom border-start border-primary border-5 p-3 mb-4 shadow-sm">
-          <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
             <h6 class="m-0 fw-bold">${r.id} <span class="text-muted fw-normal">| OF: ${r.of || '-'}</span></h6>
             <span class="badge bg-primary">Cerrado</span>
           </div>
           
           <div class="row g-2 mb-3 small bg-light p-3 rounded-3 border">
-            <div class="col-md-2"><b>Operario:</b> <br>${r.operario}</div>
-            <div class="col-md-2"><b>Inspector:</b> <br>${r.inspector}</div>
-            <div class="col-md-2"><b>Fecha:</b> <br>${r.fecha_inspeccion || '-'}</div>
-            <div class="col-md-2"><b>Cliente:</b> <br>${r.cliente || '-'}</div>
-            <div class="col-md-2"><b>Cód. Producto:</b> <br>${r.codigo_producto || '-'}</div>
-            <div class="col-md-2"><b>Color:</b> <br>${r.color || '-'}</div>
-            <div class="col-md-4 mt-2 border-top pt-2"><b>Motivo de Rechazo:</b> <br>${r.motivo_rechazo || '-'}</div>
-            <div class="col-md-8 mt-2 border-top pt-2"><b>Comentarios:</b> <br>${r.comentarios || '-'}</div>
+            <div class="col-6 col-md-2"><b>Operario:</b> <br>${r.operario}</div>
+            <div class="col-6 col-md-2"><b>Inspector:</b> <br>${r.inspector}</div>
+            <div class="col-6 col-md-2"><b>Fecha:</b> <br>${r.fecha_inspeccion || '-'}</div>
+            <div class="col-6 col-md-2"><b>Cliente:</b> <br>${r.cliente || '-'}</div>
+            <div class="col-6 col-md-2"><b>Cód. Producto:</b> <br>${r.codigo_producto || '-'}</div>
+            <div class="col-6 col-md-2"><b>Color:</b> <br>${r.color || '-'}</div>
+            <div class="col-12 col-md-4 mt-2 border-top pt-2"><b>Motivo de Rechazo:</b> <br>${r.motivo_rechazo || '-'}</div>
+            <div class="col-12 col-md-8 mt-2 border-top pt-2"><b>Comentarios:</b> <br>${r.comentarios || '-'}</div>
           </div>
 
           <div class="bg-light p-3 rounded-3 border mb-3">
              <h6 class="fw-bold text-primary small mb-3">RESOLUCIÓN DEL CASO</h6>
              
-             <div class="mb-2 d-flex align-items-center small">
-                 <span class="fw-bold me-2 text-dark">Causa Raíz Identificada:</span> 
+             <div class="mb-2 d-flex flex-wrap align-items-center small gap-1">
+                 <span class="fw-bold text-dark w-100">Causa Raíz Identificada:</span> 
                  <span class="text-muted">${s.causa_raiz_identificada || s.porque_5 || 'No registrada'}</span>
              </div>
-             <div class="mb-3 d-flex align-items-center small">
-                 <span class="fw-bold me-2 text-dark">Responsable de aplicación:</span> <span class="text-muted me-4">${s.responsable_aplicacion || '-'}</span>
-                 <span class="fw-bold me-2 text-dark">Fecha compromiso:</span> <span class="text-muted">${s.fecha_compromiso || '-'}</span>
+             <div class="mb-3 d-flex flex-wrap align-items-center small gap-2">
+                 <div class="w-100"><span class="fw-bold me-2 text-dark">Resp. de aplicación:</span> <span class="text-muted">${s.responsable_aplicacion || '-'}</span></div>
+                 <div class="w-100"><span class="fw-bold me-2 text-dark">Fecha compromiso:</span> <span class="text-muted">${s.fecha_compromiso || '-'}</span></div>
              </div>
 
              <div class="row g-3 border-top pt-2 small">
-               <div class="col-md-4"><span class="fw-bold text-primary d-block">Acción Mitigación</span><span class="text-muted">${s.accion_mitigacion || '-'}</span></div>
-               <div class="col-md-4"><span class="fw-bold text-primary d-block">Acción Correctiva</span><span class="text-muted">${s.accion_correctiva || '-'}</span></div>
-               <div class="col-md-4"><span class="fw-bold text-primary d-block">Acción de Mejora</span><span class="text-muted">${s.accion_mejora || '-'}</span></div>
+               <div class="col-12 col-md-4"><span class="fw-bold text-primary d-block">Acción Mitigación</span><span class="text-muted">${s.accion_mitigacion || '-'}</span></div>
+               <div class="col-12 col-md-4"><span class="fw-bold text-primary d-block">Acción Correctiva</span><span class="text-muted">${s.accion_correctiva || '-'}</span></div>
+               <div class="col-12 col-md-4"><span class="fw-bold text-primary d-block">Acción de Mejora</span><span class="text-muted">${s.accion_mejora || '-'}</span></div>
              </div>
           </div>
         </div>`;
