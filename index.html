@@ -62,11 +62,11 @@
       
       <div id="adminMenu" class="mb-4 hidden">
         <div class="btn-group w-100 shadow-sm rounded-4 overflow-hidden">
-          <button class="btn btn-white border py-3 fw-bold" onclick="showTab('form')">Formulario</button>
-          <button class="btn btn-white border py-3 fw-bold" onclick="showTab('dash')">Dashboard</button>
-          <button class="btn btn-white border py-3 fw-bold" onclick="showTab('follow')" style="font-size: 0.85rem;">Gestión de No Conformidades</button>
-          <button class="btn btn-white border py-3 fw-bold" onclick="showTab('closed')" style="font-size: 0.85rem;">Casos Cerrados</button>
-          <button class="btn btn-white border py-3 fw-bold text-primary" onclick="showTab('config')">⚙️ Config</button>
+          <button id="btn-tab-form" class="btn btn-white border py-3 fw-bold" onclick="showTab('form')">Formulario</button>
+          <button id="btn-tab-dash" class="btn btn-white border py-3 fw-bold" onclick="showTab('dash')">Dashboard</button>
+          <button id="btn-tab-follow" class="btn btn-white border py-3 fw-bold" onclick="showTab('follow')" style="font-size: 0.85rem;">Gestión de No Conformidades</button>
+          <button id="btn-tab-closed" class="btn btn-white border py-3 fw-bold" onclick="showTab('closed')" style="font-size: 0.85rem;">Casos Cerrados</button>
+          <button id="btn-tab-config" class="btn btn-white border py-3 fw-bold text-primary" onclick="showTab('config')">⚙️ Config</button>
         </div>
       </div>
 
@@ -615,6 +615,21 @@
     function showTab(t) {
       ['tab-form', 'tab-dash', 'tab-follow', 'tab-closed', 'tab-config'].forEach(x => document.getElementById(x).classList.add('hidden'));
       document.getElementById('tab-' + t).classList.remove('hidden');
+      
+      // Resaltar el botón activo del menú
+      ['form', 'dash', 'follow', 'closed', 'config'].forEach(x => {
+        const btn = document.getElementById('btn-tab-' + x);
+        if (btn) {
+          if (x === t) {
+            btn.classList.add('bg-primary', 'text-white');
+            btn.classList.remove('text-primary'); 
+          } else {
+            btn.classList.remove('bg-primary', 'text-white');
+            if (x === 'config') btn.classList.add('text-primary'); 
+          }
+        }
+      });
+
       if(t === 'dash') loadDashData();
       if(t === 'follow') loadFollowUpData();
       if(t === 'closed') loadClosedData(); 
