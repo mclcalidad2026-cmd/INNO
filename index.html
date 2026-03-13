@@ -143,39 +143,13 @@
         </div>
       </div>
 
+      <!-- SECCIÓN DEL DASHBOARD ACTUALIZADA PARA SER COMPATIBLE CON INNO -->
       <div id="tab-dash" class="hidden">
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 px-1 gap-2">
-          <h6 class="fw-800 m-0">Resultados de inspección</h6>
-          <select id="dashFilter" class="form-select w-auto form-select-sm fw-bold border-secondary text-primary rounded-3" onchange="applyDashFilter()">
-            <option value="all">Todo</option>
-            <option value="day">Día</option>
-            <option value="week">Semana</option>
-            <option value="month">Mes</option>
-          </select>
-        </div>
-        
-        <div class="row g-2 mb-4 text-center">
-          <div class="col-12 col-md-4"><div class="stat-card"><span id="s-total" class="stat-val">0</span><small>TOTAL</small></div></div>
-          <div class="col-12 col-md-4"><div class="stat-card" style="border-color:#22c55e"><span id="s-ok" class="stat-val text-success">0</span><small>Aceptado</small></div></div>
-          <div class="col-12 col-md-4"><div class="stat-card" style="border-color:#ef4444"><span id="s-rej" class="stat-val text-danger">0</span><small>Rechazado</small></div></div>
-        </div>
-
-        <h6 class="fw-800 mb-3 px-1">Seguimiento de rechazos</h6>
-        <div class="row g-2 mb-4 text-center">
-          <div class="col-12 col-md-4"><div class="stat-card" style="border-color:#64748b; background: #f8fafc;"><span id="s-emit" class="stat-val text-secondary" style="font-size:1.3rem">0</span><small style="font-size:0.65rem">Emitidos</small></div></div>
-          <div class="col-12 col-md-4"><div class="stat-card" style="border-color:#f59e0b; background: #fffbeb;"><span id="s-proc" class="stat-val text-warning" style="font-size:1.3rem">0</span><small style="font-size:0.65rem">En Proceso</small></div></div>
-          <div class="col-12 col-md-4"><div class="stat-card" style="border-color:#3b82f6; background: #eff6ff;"><span id="s-cerr" class="stat-val text-primary" style="font-size:1.3rem">0</span><small style="font-size:0.65rem">Cerrados</small></div></div>
-        </div>
-
-        <div class="card-custom p-3">
-          <div class="table-responsive">
-            <table class="table small align-middle">
-              <thead class="table-light"><tr><th>OF</th><th>Cliente</th><th>Decisión</th><th>Operador</th></tr></thead>
-              <tbody id="dashTable"></tbody>
-            </table>
-          </div>
+        <div class="card-custom p-1" style="height: 85vh; min-height: 800px; overflow: hidden;">
+          <iframe id="lookerIframe" width="100%" height="100%" data-src="https://lookerstudio.google.com/embed/reporting/b6196f5c-4560-4484-949c-1a74c6e64ce7/page/TlJ0C" frameborder="0" style="border:0; border-radius: 18px;" allowfullscreen sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
         </div>
       </div>
+      <!-- FIN SECCIÓN DASHBOARD -->
 
       <div id="tab-follow" class="hidden">
         <div id="followList"></div>
@@ -273,7 +247,7 @@
     }
 
     function applyDashFilter() {
-      const filter = document.getElementById('dashFilter').value;
+      const filter = document.getElementById('dashFilter') ? document.getElementById('dashFilter').value : 'all';
       const now = new Date();
       
       const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -307,21 +281,23 @@
         else if(st === 'Cerrado') cCount++;
       });
 
-      document.getElementById('s-total').innerText = total;
-      document.getElementById('s-ok').innerText = ok;
-      document.getElementById('s-rej').innerText = rejs.length;
+      if(document.getElementById('s-total')) document.getElementById('s-total').innerText = total;
+      if(document.getElementById('s-ok')) document.getElementById('s-ok').innerText = ok;
+      if(document.getElementById('s-rej')) document.getElementById('s-rej').innerText = rejs.length;
       
-      document.getElementById('s-emit').innerText = eCount;
-      document.getElementById('s-proc').innerText = pCount;
-      document.getElementById('s-cerr').innerText = cCount;
+      if(document.getElementById('s-emit')) document.getElementById('s-emit').innerText = eCount;
+      if(document.getElementById('s-proc')) document.getElementById('s-proc').innerText = pCount;
+      if(document.getElementById('s-cerr')) document.getElementById('s-cerr').innerText = cCount;
 
-      document.getElementById('dashTable').innerHTML = filteredIns.map(r => `
-        <tr>
-          <td>${r.of || '-'}</td>
-          <td>${r.cliente || '-'}</td>
-          <td><span class="badge ${r.decision==='Aceptado'?'bg-success':'bg-danger'}">${r.decision}</span></td>
-          <td>${r.inspector}</td>
-        </tr>`).join('');
+      if(document.getElementById('dashTable')) {
+          document.getElementById('dashTable').innerHTML = filteredIns.map(r => `
+            <tr>
+              <td>${r.of || '-'}</td>
+              <td>${r.cliente || '-'}</td>
+              <td><span class="badge ${r.decision==='Aceptado'?'bg-success':'bg-danger'}">${r.decision}</span></td>
+              <td>${r.inspector}</td>
+            </tr>`).join('');
+      }
     }
 
     async function loadFollowUpData() {
@@ -630,7 +606,13 @@
         }
       });
 
-      if(t === 'dash') loadDashData();
+      if(t === 'dash') {
+        loadDashData();
+        const iframe = document.getElementById('lookerIframe');
+        if (!iframe.src) {
+            iframe.src = iframe.getAttribute('data-src');
+        }
+      }
       if(t === 'follow') loadFollowUpData();
       if(t === 'closed') loadClosedData(); 
       if(t === 'config') renderAdminAtList();
