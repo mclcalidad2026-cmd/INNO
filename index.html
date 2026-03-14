@@ -40,9 +40,19 @@
       <img src="https://lh3.googleusercontent.com/d/1fbONgq552uBJkKBRezGsjBtTsgt9JneO" class="logo-img">
       <h3 class="fw-800 m-0">INNO</h3>
       <p class="text-muted small">Inspecciones Nocturnas</p>
-      <div class="text-start mt-4"><label class="form-label">Usuario</label><select id="loginUser" class="form-select"></select></div>
-      <div class="text-start mt-3 mb-4"><label class="form-label">Contraseña</label><input type="password" id="loginPass" class="form-control" placeholder="••••"></div>
-      <button class="btn btn-primary w-100 py-3 rounded-4 fw-bold shadow-sm" onclick="handleLogin()">ENTRAR</button>
+      
+      <!-- Cambio principal: Input de Correo Electrónico -->
+      <div class="text-start mt-4">
+        <label class="form-label">Correo Electrónico</label>
+        <input type="email" id="loginEmail" class="form-control" placeholder="ejemplo@inno.com">
+      </div>
+      
+      <div class="text-start mt-3 mb-4">
+        <label class="form-label">Contraseña</label>
+        <input type="password" id="loginPass" class="form-control" placeholder="••••">
+      </div>
+      
+      <button class="btn btn-primary w-100 py-3 rounded-4 fw-bold shadow-sm" onclick="iniciarSesion()">ENTRAR</button>
       <div id="loginError" class="text-danger mt-3 small fw-bold"></div>
     </div>
   </div>
@@ -143,13 +153,11 @@
         </div>
       </div>
 
-      <!-- SECCIÓN DEL DASHBOARD ACTUALIZADA PARA SER COMPATIBLE CON INNO -->
       <div id="tab-dash" class="hidden">
         <div class="card-custom p-1" style="height: 85vh; min-height: 800px; overflow: hidden;">
           <iframe id="lookerIframe" width="100%" height="100%" data-src="https://lookerstudio.google.com/embed/reporting/b6196f5c-4560-4484-949c-1a74c6e64ce7/page/TlJ0C" frameborder="0" style="border:0; border-radius: 18px;" allowfullscreen sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
         </div>
       </div>
-      <!-- FIN SECCIÓN DASHBOARD -->
 
       <div id="tab-follow" class="hidden">
         <div id="followList"></div>
@@ -187,7 +195,6 @@
     let admData = { inspections: [], followUp: {} }; 
     let session = {}, currentSample = 0;
 
-    // Nuevas variables globales para filtros de búsqueda y tiempo
     let globalDashInspections = [];
     let globalDashFollowUps = [];
     let globalClosedInspections = [];
@@ -206,9 +213,6 @@
         renderChecklist();
 
         const { data: maestros } = await _supabase.from('maestros').select('*');
-        const { data: users } = await _supabase.from('usuarios').select('nombre');
-        
-        fillSelect('loginUser', (users || []).map(u => u.nombre));
         
         const mList = maestros || [];
         fillSelect('f_op_ins', mList.filter(m => m.tipo.toLowerCase() === 'operario').map(m => m.valor));
@@ -219,6 +223,59 @@
       } catch (e) { console.error("Error cargando maestros:", e); }
       document.getElementById('loader').classList.add('hidden');
     }
+
+    // --- NUEVA LÓGICA DE INICIO DE SESIÓN INTEGRADA ---
+    async function iniciarSesion() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPass').value;
+      const errorDiv = document.getElementById('loginError');
+
+      errorDiv.innerText = ""; // Limpiamos errores previos
+
+      if (!email || !password) {
+        errorDiv.innerText = "Por favor, ingresa tu correo y contraseña.";
+        return;
+      }
+
+      document.getElementById('loader').classList.remove('hidden');
+
+      // 1. Iniciar sesión usando Autenticación de Supabase (La Puerta)
+      const { data: authData, error: authError } = await _supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (authError) {
+        document.getElementById('loader').classList.add('hidden');
+        errorDiv.innerText = "Error de acceso: Credenciales inválidas.";
+        console.error("Auth error:", authError);
+        return;
+      }
+
+      // 2. Extraer el user.id generado por Auth
+      const userId = authData.user.id;
+
+      // 3. Buscar el perfil en la tabla 'usuarios' usando ese ID
+      const { data: perfil, error: perfilError } = await _supabase
+        .from('usuarios')
+        .select('nombre, rol')
+        .eq('user_id', userId)
+        .single();
+
+      document.getElementById('loader').classList.add('hidden');
+
+      if (perfilError || !perfil) {
+        console.error("Error al buscar perfil en tabla usuarios:", perfilError);
+        errorDiv.innerText = "Sesión iniciada, pero no encontramos tus datos en la tabla 'usuarios'. Revisa el User ID.";
+        return;
+      }
+
+      // 4. Si todo es exitoso, guardar la sesión e inicializar la interfaz
+      session = { user: perfil.nombre, role: perfil.rol };
+      localStorage.setItem('inno_supabase_session', JSON.stringify(session));
+      initUI();
+    }
+    // --------------------------------------------------
 
     function renderChecklist() {
       const tb = document.getElementById('checklistBody');
@@ -592,7 +649,6 @@
       ['tab-form', 'tab-dash', 'tab-follow', 'tab-closed', 'tab-config'].forEach(x => document.getElementById(x).classList.add('hidden'));
       document.getElementById('tab-' + t).classList.remove('hidden');
       
-      // Resaltar el botón activo del menú
       ['form', 'dash', 'follow', 'closed', 'config'].forEach(x => {
         const btn = document.getElementById('btn-tab-' + x);
         if (btn) {
@@ -634,22 +690,17 @@
       } else { showTab('form'); }
     }
 
-    async function handleLogin() {
-      const u = document.getElementById('loginUser').value, p = document.getElementById('loginPass').value;
-      const { data } = await _supabase.from('usuarios').select('*').eq('nombre', u).eq('password', p).single();
-      if (data) {
-        session = { user: data.nombre, role: data.rol };
-        localStorage.setItem('inno_supabase_session', JSON.stringify(session));
-        initUI();
-      } else { document.getElementById('loginError').innerText = "Credenciales inválidas"; }
-    }
-
     function fillSelect(id, list) { 
       const el = document.getElementById(id);
       if(el && list) el.innerHTML = list.map(x => `<option value="${x}">${x}</option>`).join(''); 
     }
     
-    function handleLogout() { localStorage.removeItem('inno_supabase_session'); location.reload(); }
+    // --- NUEVO: CIERRE DE SESIÓN EN AUTH ---
+    async function handleLogout() { 
+      await _supabase.auth.signOut(); // Cierra sesión en el guardia de seguridad de Supabase
+      localStorage.removeItem('inno_supabase_session'); 
+      location.reload(); 
+    }
     
     function updateANSI() {
       const l = parseInt(document.getElementById('f_rollos').value) || 0;
