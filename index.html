@@ -35,6 +35,7 @@
     <span class="mt-3 fw-bold small">Procesando...</span>
   </div>
 
+  <!-- INICIO DE SESIÓN CON CORREO -->
   <div id="loginView" class="container" style="max-width: 400px; margin-top: 8vh;">
     <div class="card-custom text-center p-4 shadow-sm">
       <img src="https://lh3.googleusercontent.com/d/1fbONgq552uBJkKBRezGsjBtTsgt9JneO" class="logo-img">
@@ -151,11 +152,13 @@
         </div>
       </div>
 
+      <!-- DASHBOARD CARGADO DINÁMICAMENTE (Soluciona el problema de que se vea cortado) -->
       <div id="tab-dash" class="hidden">
         <div class="card-custom p-1" style="height: 85vh; min-height: 800px; overflow: hidden;">
-          <iframe id="lookerIframe" width="100%" height="100%" data-src="https://lookerstudio.google.com/embed/reporting/b6196f5c-4560-4484-949c-1a74c6e64ce7/page/TlJ0C" frameborder="0" style="border:0; border-radius: 18px;" allowfullscreen sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+          <iframe id="dashIframe" width="100%" height="100%" frameborder="0" style="border:0; border-radius: 18px;" allowfullscreen></iframe>
         </div>
       </div>
+
       <div id="tab-follow" class="hidden">
         <div id="followList"></div>
       </div>
@@ -198,11 +201,10 @@
     let globalClosedMap = {};
 
     window.onload = async () => {
-      // Ahora checkSession maneja el flujo inicial
       checkSession();
     };
 
-    // --- NUEVAS FUNCIONES DE AUTENTICACIÓN SUPABASE ---
+    // --- AUTENTICACIÓN SUPABASE (CORREO/CONTRASEÑA) ---
     async function handleLogin() {
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPass').value;
@@ -220,29 +222,30 @@
             errorDiv.innerText = "Error: " + error.message;
             document.getElementById('loader').classList.add('hidden');
         }
-        // Si hay éxito, el listener onAuthStateChange se encarga de todo.
     }
 
     function checkSession() {
-        _supabase.auth.onAuthStateChange((event, session) => {
-            if (session) {
-                // Usuario autenticado
+        _supabase.auth.onAuthStateChange((event, authSession) => {
+            if (authSession) {
+                session = { user: authSession.user.email, role: 'Administrador' };
+
                 document.getElementById('loginView').classList.add('hidden');
                 document.getElementById('mainView').classList.remove('hidden');
-                document.getElementById('displayName').innerText = session.user.email;
-                document.getElementById('adminMenu').classList.remove('hidden'); // Ajusta según permisos reales
+                document.getElementById('displayName').innerText = session.user;
+                document.getElementById('adminMenu').classList.remove('hidden'); 
                 
-                // Cargar datos si no se han cargado
+                showTab('form');
+
                 if(ATRIBUTOS_DINAMICOS.length === 0) {
                    loadInitialData();
                 } else {
                    document.getElementById('loader').classList.add('hidden');
                 }
             } else {
-                // No hay usuario
                 document.getElementById('loginView').classList.remove('hidden');
                 document.getElementById('mainView').classList.add('hidden');
                 document.getElementById('loader').classList.add('hidden');
+                session = {};
             }
         });
     }
@@ -261,16 +264,12 @@
         renderChecklist();
 
         const { data: maestros } = await _supabase.from('maestros').select('*');
-        // NOTA: Eliminamos la carga de "usuarios" al select de loginUser porque usamos Auth.
-        
         const mList = maestros || [];
-        // Utilizo funciones auxiliares que supongo que tienes en el resto de tu código (fillSelect)
-        if(typeof fillSelect === "function") {
-            fillSelect('f_op_ins', mList.filter(m => m.tipo.toLowerCase() === 'operario').map(m => m.valor));
-            fillSelect('f_maq', mList.filter(m => m.tipo.toLowerCase() === 'maquina').map(m => m.valor));
-            fillSelect('f_mat', mList.filter(m => m.tipo.toLowerCase() === 'material').map(m => m.valor));
-            fillSelect('f_prov', mList.filter(m => m.tipo.toLowerCase() === 'proveedor').map(m => m.valor));
-        }
+        
+        fillSelect('f_op_ins', mList.filter(m => m.tipo.toLowerCase() === 'operario').map(m => m.valor));
+        fillSelect('f_maq', mList.filter(m => m.tipo.toLowerCase() === 'maquina').map(m => m.valor));
+        fillSelect('f_mat', mList.filter(m => m.tipo.toLowerCase() === 'material').map(m => m.valor));
+        fillSelect('f_prov', mList.filter(m => m.tipo.toLowerCase() === 'proveedor').map(m => m.valor));
 
       } catch (e) { console.error("Error cargando maestros:", e); }
       document.getElementById('loader').classList.add('hidden');
@@ -307,12 +306,9 @@
     function applyDashFilter() {
       const filter = document.getElementById('dashFilter') ? document.getElementById('dashFilter').value : 'all';
       const now = new Date();
-      
       const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      
       const startOfWeek = new Date(startOfDay);
       startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-      
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
       let filteredIns = globalDashInspections.filter(x => {
@@ -342,7 +338,6 @@
       if(document.getElementById('s-total')) document.getElementById('s-total').innerText = total;
       if(document.getElementById('s-ok')) document.getElementById('s-ok').innerText = ok;
       if(document.getElementById('s-rej')) document.getElementById('s-rej').innerText = rejs.length;
-      
       if(document.getElementById('s-emit')) document.getElementById('s-emit').innerText = eCount;
       if(document.getElementById('s-proc')) document.getElementById('s-proc').innerText = pCount;
       if(document.getElementById('s-cerr')) document.getElementById('s-cerr').innerText = cCount;
@@ -565,7 +560,6 @@
         document.getElementById('whys_panel_' + id).classList.toggle('hidden');
     }
 
-    // --- FUNCIÓN COMPLETADA (Tu código original se cortaba aquí) ---
     async function saveAdminAction(id) {
       document.getElementById('loader').classList.remove('hidden');
       
@@ -581,22 +575,160 @@
         porque_3: getVal('p3_'+id),
         porque_4: getVal('p4_'+id),
         porque_5: getVal('p5_'+id),
+        
         causa_raiz_identificada: getVal('cri_'+id),
         responsable_aplicacion: getVal('resp_'+id),
-        fecha_compromiso: getVal('fc_'+id),
-        estado: document.getElementById('e_'+id).value
-      };
+        fecha_compromiso: getVal('fc_'+id) || null,
 
-      // Aquí deberías hacer tu llamada a Supabase para actualizar. Ejemplo:
-      const { error } = await _supabase.from('seguimiento_rechazos').upsert(payload, { onConflict: 'inspeccion_id' });
+        estado: document.getElementById('e_'+id).value,
+        actualizado_por: session.user,
+        fecha_actualizacion: new Date().toISOString()
+      };
       
-      if(error) {
-          alert("Error guardando gestión: " + error.message);
-      } else {
-          alert("Acción guardada correctamente");
+      const { error } = await _supabase.from('seguimiento_rechazos').upsert(payload, { onConflict: 'inspeccion_id' });
+      if(!error) { 
+        alert("¡Guardado correctamente!"); 
+        loadFollowUpData(); 
+      }
+      else { 
+        alert("Hubo un error al guardar: " + error.message); 
       }
       
       document.getElementById('loader').classList.add('hidden');
+    }
+
+    async function handleSave() {
+      const dec = document.querySelector('input[name="decision"]:checked');
+      if(!dec) return alert("Seleccione decisión");
+      
+      let checks = {};
+      for(let at of ATRIBUTOS_DINAMICOS) {
+        let sel = document.querySelector(`input[name="at_${at.id}"]:checked`);
+        if(!sel) return alert("Falta: " + at.nombre);
+        checks[at.nombre] = sel.value;
+      }
+
+      const crit = document.getElementById('f_criticidad').value;
+      let aql = "";
+      let reLimitValue = "";
+
+      if(crit) {
+          aql = (crit === "Crítico") ? "0.4" : (crit === "Mayor") ? "1.0" : (crit === "Leve") ? "4.0" : "";
+          if (aql && currentSample && ANSI_TABLE[currentSample]) {
+              reLimitValue = ANSI_TABLE[currentSample][parseFloat(aql)];
+          }
+      }
+
+      const payload = {
+        id: "INNO-" + Date.now(),
+        inspector: session.user,
+        operario: document.getElementById('f_op_ins').value,
+        maquina: document.getElementById('f_maq').value,
+        fecha_inspeccion: document.getElementById('f_fecha').value,
+        of: document.getElementById('f_of').value,
+        cliente: document.getElementById('f_cliente').value,
+        proveedor: document.getElementById('f_prov').value,
+        material: document.getElementById('f_mat').value,
+        color: document.getElementById('f_color').value,
+        dimensiones: document.getElementById('f_dims').value,
+        inpa: document.getElementById('f_inpa').value,
+        codigo_producto: document.getElementById('f_codProd').value,
+        ansi: document.getElementById('displayANSI').innerText,
+        criticidad: crit,
+        motivo_rechazo: (dec.value === 'Rechazado') ? document.getElementById('f_motivo_rechazo').value : '',
+        aql_val: aql,
+        re_limit: reLimitValue ? reLimitValue.toString() : "",
+        checklist: checks,
+        decision: dec.value,
+        comentarios: document.getElementById('f_comments').value,
+        rollos: document.getElementById('f_rollos').value
+      };
+
+      const { error } = await _supabase.from('inspecciones').insert([payload]);
+      if(!error) { 
+        alert("¡Registro guardado correctamente!"); 
+        location.reload(); 
+      } else {
+        console.error(error);
+        alert("Error al guardar: " + error.message);
+      }
+    }
+
+    // MODIFICADO: Solo inyectamos el src del iframe cuando hacemos clic en Dashboard
+    function showTab(t) {
+      ['tab-form', 'tab-dash', 'tab-follow', 'tab-closed', 'tab-config'].forEach(x => document.getElementById(x).classList.add('hidden'));
+      document.getElementById('tab-' + t).classList.remove('hidden');
+      
+      ['form', 'dash', 'follow', 'closed', 'config'].forEach(x => {
+        const btn = document.getElementById('btn-tab-' + x);
+        if (btn) {
+          if (x === t) {
+            btn.classList.add('bg-primary', 'text-white');
+            btn.classList.remove('text-primary'); 
+          } else {
+            btn.classList.remove('bg-primary', 'text-white');
+            if (x === 'config') btn.classList.add('text-primary'); 
+          }
+        }
+      });
+
+      // Lógica de carga diferida (Lazy Load) para Looker Studio
+      if(t === 'dash') {
+          loadDashData();
+          const dashIframe = document.getElementById('dashIframe');
+          if (dashIframe && !dashIframe.src) {
+              // Carga el dashboard SOLO cuando se hace clic en la pestaña, resolviendo el corte.
+              dashIframe.src = "https://lookerstudio.google.com/embed/reporting/b6196f5c-4560-4484-949c-1a74c6e64ce7/page/TlJ0C";
+          }
+      }
+      
+      if(t === 'follow') loadFollowUpData();
+      if(t === 'closed') loadClosedData(); 
+      if(t === 'config') renderAdminAtList();
+      if(t === 'form') document.getElementById('f_fecha').valueAsDate = new Date();
+    }
+
+    function fillSelect(id, list) { 
+      const el = document.getElementById(id);
+      if(el && list) el.innerHTML = list.map(x => `<option value="${x}">${x}</option>`).join(''); 
+    }
+    
+    function updateANSI() {
+      const l = parseInt(document.getElementById('f_rollos').value) || 0;
+      currentSample = l < 9 ? 2 : l < 16 ? 3 : l < 26 ? 5 : l < 51 ? 8 : l < 91 ? 13 : l < 151 ? 20 : l < 281 ? 32 : l < 501 ? 50 : l < 1201 ? 80 : 125;
+      document.getElementById('displayANSI').innerText = currentSample;
+    }
+    
+    function toggleRechazo() { document.getElementById('rejectionSection').classList.toggle('hidden', !document.getElementById('decR').checked); }
+    
+    function calcRejection() {
+      const crit = document.getElementById('f_criticidad').value;
+      if (!crit || !currentSample) return;
+      const aql = (crit === "Crítico") ? 0.4 : (crit === "Mayor") ? 1.0 : 4.0;
+      const re = ANSI_TABLE[currentSample][aql];
+      document.getElementById('rejectionResult').innerText = `Límite Re: ${re} defectos`;
+    }
+    
+    async function addAtributo() {
+      const n = document.getElementById('newAtName').value;
+      if(!n) return;
+      await _supabase.from('config_atributos').insert([{ nombre: n }]);
+      document.getElementById('newAtName').value = "";
+      await loadInitialData();
+    }
+    
+    async function deleteAtributo(id) {
+      if(!confirm("¿Eliminar?")) return;
+      await _supabase.from('config_atributos').delete().eq('id', id);
+      await loadInitialData();
+    }
+    
+    function renderAdminAtList() {
+      document.getElementById('adminAtList').innerHTML = ATRIBUTOS_DINAMICOS.map(at => `
+        <div class="list-group-item d-flex justify-content-between align-items-center mb-2 border rounded-4">
+          <span>${at.nombre}</span>
+          <button class="btn btn-sm btn-danger" onclick="deleteAtributo('${at.id}')">Eliminar</button>
+        </div>`).join('');
     }
   </script>
 </body>
