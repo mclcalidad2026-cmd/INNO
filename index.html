@@ -152,7 +152,7 @@
         </div>
       </div>
 
-      <!-- DASHBOARD CARGADO DINÁMICAMENTE (Soluciona el problema de que se vea cortado) -->
+      <!-- DASHBOARD CARGADO DINÁMICAMENTE -->
       <div id="tab-dash" class="hidden">
         <div class="card-custom p-1" style="height: 85vh; min-height: 800px; overflow: hidden;">
           <iframe id="dashIframe" width="100%" height="100%" frameborder="0" style="border:0; border-radius: 18px;" allowfullscreen></iframe>
@@ -225,16 +225,29 @@
     }
 
     function checkSession() {
-        _supabase.auth.onAuthStateChange((event, authSession) => {
+        _supabase.auth.onAuthStateChange(async (event, authSession) => {
             if (authSession) {
-                session = { user: authSession.user.email, role: 'Administrador' };
+                
+                // --- IDENTIFICACIÓN DEL ROL ---
+                const userEmail = authSession.user.email;
+                // Si el correo es admin@mcl.com, es Administrador. De lo contrario, es Operador.
+                const userRole = (userEmail === 'admin@mcl.com') ? 'Administrador' : 'Operador';
+                
+                session = { user: userEmail, role: userRole };
 
                 document.getElementById('loginView').classList.add('hidden');
                 document.getElementById('mainView').classList.remove('hidden');
                 document.getElementById('displayName').innerText = session.user;
-                document.getElementById('adminMenu').classList.remove('hidden'); 
                 
-                showTab('form');
+                // --- DIVISIÓN DE ROLES EN LA INTERFAZ ---
+                if (session.role === "Administrador") {
+                    document.getElementById('adminMenu').classList.remove('hidden'); 
+                    showTab('dash'); // Manda al Admin al Dashboard por defecto
+                } else {
+                    document.getElementById('adminMenu').classList.add('hidden'); // Oculta el menú a operadores
+                    showTab('form'); // Manda al Operador directo al Formulario
+                }
+                // ----------------------------------------
 
                 if(ATRIBUTOS_DINAMICOS.length === 0) {
                    loadInitialData();
@@ -654,7 +667,6 @@
       }
     }
 
-    // MODIFICADO: Solo inyectamos el src del iframe cuando hacemos clic en Dashboard
     function showTab(t) {
       ['tab-form', 'tab-dash', 'tab-follow', 'tab-closed', 'tab-config'].forEach(x => document.getElementById(x).classList.add('hidden'));
       document.getElementById('tab-' + t).classList.remove('hidden');
